@@ -1,15 +1,14 @@
 import requests
+import os
 from datetime import datetime, time
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-# ===== CONFIG =====
-NOTION_TOKEN = "ntn_Pw7690331805lj1NYpxeqefjjbLsFdAHGyWzZU8zrjxbep"
-DATABASE_ID = "30002dd683dc80c8a20ad8124eee7195"
-TELEGRAM_TOKEN = "8290096778:AAHyL54QzFqqZ07WbZLtek9oNW9MhZhLZaw"
-CHAT_ID = "7027248897"
 
-from datetime import datetime, timedelta
-
+# ===== CONFIG FROM ENV =====
+NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+DATABASE_ID = os.getenv("DATABASE_ID")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 
 # =========================
 # 📊 FUNCTION: GET TODAY TASKS
@@ -32,23 +31,19 @@ def get_today_tasks():
     for page in data["results"]:
         props = page["properties"]
 
-        # Task name
         title_list = props["Task"]["title"]
         if not title_list:
             continue
         task = title_list[0]["plain_text"]
 
-        # Chapter
         chapter = props["Chapter"]["select"]["name"] if props["Chapter"]["select"] else "No Chapter"
 
-        # Due date
         due = props["Due Date"]["date"]
         if not due:
             continue
 
         due_date = datetime.fromisoformat(due["start"].replace("Z", "+00:00")).date()
 
-        # Filter: only today
         if due_date == today:
             today_tasks.append(f"• {chapter} - {task} - {due_date}")
 
@@ -80,10 +75,8 @@ async def send_daily(context: ContextTypes.DEFAULT_TYPE):
 # =========================
 app = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
 
-# command handler
 app.add_handler(CommandHandler("today", today))
 
-# schedule job (9:00 AM daily)
 app.job_queue.run_daily(send_daily, time(hour=9, minute=0))
 
 print("🤖 Bot is running...")
