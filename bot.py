@@ -25,8 +25,8 @@ def get_today_tasks():
     response = requests.post(url, headers=headers)
     data = response.json()
 
-    today = datetime.now().date()
     today_tasks = []
+    today_str = datetime.now().strftime("%Y-%m-%d")  # define once
 
     for page in data["results"]:
         props = page["properties"]
@@ -42,9 +42,10 @@ def get_today_tasks():
         if not due:
             continue
 
-        due_date = datetime.fromisoformat(due["start"].replace("Z", "+00:00")).date()
+        due_date = due["start"][:10]
 
-        if due_date == today:
+        # ✅ correctly indented inside loop
+        if due_date == today_str:
             today_tasks.append(f"• {chapter} - {task} - {due_date}")
 
     message = "📚 *Today's To Do*\n\n"
